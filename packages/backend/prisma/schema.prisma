@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  employee
+  administrator
+}
+
+enum TimeEntryStatus {
+  pending
+  approved
+  rejected
+}
+
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+}
+
+enum BillingRuleType {
+  travel
+  allowance
+  other
+}
+
+enum InvoiceLineItemType {
+  time_entry
+  additional_charge
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         UserRole @default(employee)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  timeEntries        TimeEntry[]
+  auditLogs          AuditLog[]
+  employeeAllocation EmployeeAllocation?
+  employeeRates      Rate[]
+
+  @@map("users")
+}
+
+model EmployeeAllocation {
+  id            String   @id @default(uuid())
+  employeeId    String   @unique @map("employee_id")
+  percentage    Decimal  @db.Decimal(5, 2)
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  employee User @relation(fields: [employeeId], references: [id])
+
+  @@map("employee_allocations")
+}
+
+
+model Client {
+  id           String   @id @default(uuid())
+  name         String
+  contactEmail String?  @map("contact_email")
+  contactPhone String?  @map("contact_phone")
+  address      String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  timeEntries TimeEntry[]
+  invoices    Invoice[]
+
+  @@map("clients")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  timeEntries TimeEntry[]
+  rates       Rate[]
+
+  @@map("services")
+}
+
+model Rate {
+  id            String   @id @default(uuid())
+  serviceId     String   @map("service_id")
+  employeeId    String?  @map("employee_id")
+  hourlyRate    Decimal  @map("hourly_rate") @db.Decimal(10, 2)
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  service  Service @relation(fields: [serviceId], references: [id])
+  employee User?   @relation(fields: [employeeId], references: [id])
+
+  @@unique([serviceId, employeeId])
+  @@map("rates")
+}
+
+model BillingRule {
+  id            String          @id @default(uuid())
+  name          String
+  type          BillingRuleType
+  defaultAmount Decimal         @map("default_amount") @db.Decimal(10, 2)
+  description   String?
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@map("billing_rules")
+}
+
+model TimeEntry {
+  id           String          @id @default(uuid())
+  employeeId   String          @map("employee_id")
+  clientId     String          @map("client_id")
+  serviceId    String          @map("service_id")
+  activityDate DateTime        @map("activity_date") @db.Date
+  memo         String?
+  rate         Decimal         @db.Decimal(10, 2)
+  duration     Decimal         @db.Decimal(5, 2)
+  billable     Boolean         @default(true)
+  amount       Decimal         @db.Decimal(10, 2)
+  status       TimeEntryStatus @default(pending)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  employee  User               @relation(fields: [employeeId], references: [id])
+  client    Client             @relation(fields: [clientId], references: [id])
+  service   Service            @relation(fields: [serviceId], references: [id])
+  lineItems InvoiceLineItem[]
+
+  @@index([employeeId])
+  @@index([clientId])
+  @@index([activityDate])
+  @@map("time_entries")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique @map("invoice_number")
+  clientId      String        @map("client_id")
+  startDate     DateTime      @map("start_date") @db.Date
+  endDate       DateTime      @map("end_date") @db.Date
+  subtotal      Decimal       @db.Decimal(10, 2)
+  total         Decimal       @db.Decimal(10, 2)
+  status        InvoiceStatus @default(draft)
+  generatedAt   DateTime      @default(now()) @map("generated_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  client    Client            @relation(fields: [clientId], references: [id])
+  lineItems InvoiceLineItem[]
+
+  @@index([clientId])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id          String              @id @default(uuid())
+  invoiceId   String              @map("invoice_id")
+  timeEntryId String?             @map("time_entry_id")
+  description String
+  quantity    Decimal             @db.Decimal(10, 2)
+  rate        Decimal             @db.Decimal(10, 2)
+  amount      Decimal             @db.Decimal(10, 2)
+  type        InvoiceLineItemType
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  invoice   Invoice    @relation(fields: [invoiceId], references: [id])
+  timeEntry TimeEntry? @relation(fields: [timeEntryId], references: [id])
+
+  @@map("invoice_line_items")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  userId     String      @map("user_id")
+  action     AuditAction
+  entityType String      @map("entity_type")
+  entityId   String      @map("entity_id")
+  oldValues  Json?       @map("old_values")
+  newValues  Json?       @map("new_values")
+  timestamp  DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
