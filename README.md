@@ -87,3 +87,35 @@ These warnings can be ignored - the app uses an in-memory database for demo purp
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS
 - **Backend:** Node.js, Express, TypeScript
 - **Testing:** Vitest with property-based testing (fast-check)
+
+## Free Deployment Options
+
+### Option 1: Render (Recommended - Easiest)
+1. Push your code to GitHub
+2. Go to [render.com](https://render.com) and sign up
+3. Click "New" → "Blueprint" and connect your GitHub repo
+4. Render will auto-detect the `render.yaml` and deploy both services
+5. Set the frontend environment variable `VITE_API_URL` to your backend URL (e.g., `https://time-tracking-api.onrender.com/api`)
+
+### Option 2: Railway
+1. Push your code to GitHub
+2. Go to [railway.app](https://railway.app) and sign up
+3. Create a new project and connect your GitHub repo
+4. Add two services:
+   - Backend: Set root directory to `packages/backend`, start command: `npm run build && npm start`
+   - Frontend: Set root directory to `packages/frontend`, build command: `npm run build`, publish directory: `dist`
+5. Set environment variables:
+   - Backend: `JWT_SECRET` (any random string), `PORT=3001`
+   - Frontend: `VITE_API_URL=https://your-backend-url.railway.app/api`
+
+### Option 3: Vercel (Frontend) + Render (Backend)
+1. Deploy backend to Render as a Web Service
+2. Deploy frontend to [vercel.com](https://vercel.com):
+   - Connect GitHub repo
+   - Set root directory to `packages/frontend`
+   - Add environment variable: `VITE_API_URL=https://your-backend.onrender.com/api`
+
+### Important Notes for Deployment
+- The app uses an in-memory database, so data resets when the server restarts
+- For persistent data, you'd need to add a real database (PostgreSQL, MongoDB, etc.)
+- Free tiers may have cold starts (first request takes longer after inactivity)
