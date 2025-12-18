@@ -103,51 +103,72 @@ class MockDatabase {
       createdAt: new Date(),
     });
 
-    // Create clients
-    this.clients.push({
-      id: 'client-acme',
-      name: 'Acme Corporation',
-      contactEmail: 'contact@acme.com',
-      contactPhone: '555-0100',
-      address: '123 Business Ave, Suite 100',
-      active: true,
+    // Create clients from your list
+    const clientNames = [
+      '365 Days Property Investment t/a',
+      'AJ Dyer t/a Atlantic Medical Supplies',
+      'Coffee Capsules Direct',
+      'Crusted Pizza',
+      'De Wet Sports',
+      'GSJE Properties',
+      'Hearshaw and Kinnes Analytical Labs',
+      'Hoofdt Trading (Pty) Ltd',
+      'Huge TNS (Pty) Ltd',
+      'Labcal Solutions',
+      'Ms Alice Marques',
+      'Ms Nicola Hudson',
+      'Netclick (Pty) Ltd',
+      'Olea Interiors',
+      'Olive Tree Interiors',
+      "Riaan's Pit Stop Automotive",
+      'Rob Dyer Surgical (Pty) Ltd',
+      'Select SACS SA (Pty) Ltd',
+      'Topolino Privaatskool',
+      'West Point Fishing',
+      'West Point Processors',
+    ];
+
+    clientNames.forEach((name, index) => {
+      const id = `client-${index + 1}`;
+      this.clients.push({
+        id,
+        name,
+        contactEmail: `contact@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.co.za`,
+        contactPhone: `021-${String(100 + index).padStart(3, '0')}-${String(1000 + index).padStart(4, '0')}`,
+        address: `${index + 1} Business Street, Cape Town`,
+        active: true,
+      });
     });
 
-    this.clients.push({
-      id: 'client-techstart',
-      name: 'TechStart Inc',
-      contactEmail: 'info@techstart.com',
-      contactPhone: '555-0200',
-      address: '456 Innovation Blvd',
-      active: true,
-    });
+    // Create services from your business data
+    const serviceData = [
+      { name: 'HR Consulting', description: 'HR Consulting services' },
+      { name: 'HR Retainer Agreement', description: 'HR Retainer Agreement services' },
+      { name: 'Other Services: Sales', description: 'Sales and other services' },
+      { name: 'Payroll Retainer', description: 'Payroll Retainer services' },
+      { name: 'Payroll Setup Fee', description: 'Payroll system setup' },
+      { name: 'Sick Leave Analysis', description: 'Sick leave analysis services' },
+      { name: 'Skills Development Fees', description: 'Skills development services' },
+      { name: 'Training Courses', description: 'Training programs and courses' },
+      { name: 'Disciplinary Hearings', description: 'Disciplinary hearing services' },
+    ];
 
-    // Create services
-    this.services.push({
-      id: 'service-consulting',
-      name: 'Consulting',
-      description: 'General consulting services',
-      active: true,
+    serviceData.forEach((svc, index) => {
+      const id = `service-${index + 1}`;
+      this.services.push({
+        id,
+        name: svc.name,
+        description: svc.description,
+        active: true,
+      });
+      // Create default rate for each service
+      this.rates.push({
+        id: `rate-${index + 1}`,
+        serviceId: id,
+        employeeId: null,
+        hourlyRate: 150 + (index * 25), // Varying rates
+      });
     });
-
-    this.services.push({
-      id: 'service-development',
-      name: 'Software Development',
-      description: 'Custom software development',
-      active: true,
-    });
-
-    this.services.push({
-      id: 'service-training',
-      name: 'Training',
-      description: 'Technical training and workshops',
-      active: true,
-    });
-
-    // Create default rates
-    this.rates.push({ id: 'rate-1', serviceId: 'service-consulting', employeeId: null, hourlyRate: 150 });
-    this.rates.push({ id: 'rate-2', serviceId: 'service-development', employeeId: null, hourlyRate: 175 });
-    this.rates.push({ id: 'rate-3', serviceId: 'service-training', employeeId: null, hourlyRate: 125 });
 
     // Create allocations
     this.allocations.push({ employeeId: 'user-john', percentage: 15 });

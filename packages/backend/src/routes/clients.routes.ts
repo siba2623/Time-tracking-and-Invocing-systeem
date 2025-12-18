@@ -6,9 +6,9 @@ const router = Router();
 
 /**
  * GET /api/clients
- * List all clients (admin only)
+ * List all clients (all authenticated users can view)
  */
-router.get('/', authenticateToken, requireRole(['administrator']), async (_req: Request, res: Response) => {
+router.get('/', authenticateToken, async (_req: Request, res: Response) => {
   try {
     await mockDb.initialize();
     res.json({
@@ -46,29 +46,37 @@ router.get('/:id', authenticateToken, requireRole(['administrator']), async (req
 
 /**
  * POST /api/clients
- * Create a new client (admin only)
+ * Create a new client (all authenticated users can create)
  */
-router.post('/', authenticateToken, requireRole(['administrator']), async (req: Request, res: Response) => {
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { name, contactEmail, contactPhone, address } = req.body;
 
-    if (!name || !contactEmail) {
+    if (!name) {
       res.status(400).json({
         success: false,
-        error: 'Name and contact email are required',
+        error: 'Name is required',
       });
       return;
     }
 
-    // In a real implementation, this would create in the database
+    await mockDb.initialize();
+    
+    // Create new client in mock database
+    const newClient = {
+      id: `client-${Date.now()}`,
+      name,
+      contactEmail: contactEmail || `contact@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+      contactPhone: contactPhone || '',
+      address: address || '',
+      active: true,
+    };
+    
+    mockDb.clients.push(newClient);
+
     res.status(201).json({
       success: true,
-      data: {
-        name,
-        contactEmail,
-        contactPhone,
-        address,
-      },
+      data: newClient,
     });
   } catch (error) {
     res.status(500).json({

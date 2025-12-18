@@ -66,16 +66,23 @@ export function verifyToken(token: string): AuthPayload {
  * Validates: Requirements 10.1, 10.2
  */
 export async function login(email: string, password: string): Promise<LoginResponse> {
+  console.log(`Login attempt for: ${email}`);
   await mockDb.initialize();
+  
   const user = mockDb.findUserByEmail(email);
+  console.log(`User found: ${user ? 'yes' : 'no'}`);
 
   // Generic error message to not reveal which credential was incorrect
   // Validates: Requirements 10.2
   if (!user) {
+    console.log('User not found');
     throw ApiError.unauthorized('Invalid credentials');
   }
 
+  console.log('Verifying password...');
   const isValidPassword = await verifyPassword(password, user.passwordHash);
+  console.log(`Password valid: ${isValidPassword}`);
+  
   if (!isValidPassword) {
     throw ApiError.unauthorized('Invalid credentials');
   }

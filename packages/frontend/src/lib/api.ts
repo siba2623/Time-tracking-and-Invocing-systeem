@@ -18,10 +18,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    console.log('API Error:', error.response?.data);
+    
+    // Extract error message from response (handle both 'error' and 'message' fields)
+    const message = error.response?.data?.message || error.response?.data?.error || error.message || 'Request failed';
+    
+    // Only redirect on 401 if not on login page
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-    return Promise.reject(error);
+    
+    // Create a new error with the extracted message
+    const enhancedError = new Error(message);
+    return Promise.reject(enhancedError);
   }
 );

@@ -25,9 +25,9 @@ router.get('/', authenticateToken, async (_req: Request, res: Response) => {
 
 /**
  * POST /api/services
- * Create a new service (admin only)
+ * Create a new service (all authenticated users can create)
  */
-router.post('/', authenticateToken, requireRole(['administrator']), async (req: Request, res: Response) => {
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { name, description } = req.body;
 
@@ -39,13 +39,21 @@ router.post('/', authenticateToken, requireRole(['administrator']), async (req: 
       return;
     }
 
+    await mockDb.initialize();
+    
+    // Create new service in mock database
+    const newService = {
+      id: `service-${Date.now()}`,
+      name,
+      description: description ?? '',
+      active: true,
+    };
+    
+    mockDb.services.push(newService);
+
     res.status(201).json({
       success: true,
-      data: {
-        name,
-        description: description ?? '',
-        active: true,
-      },
+      data: newService,
     });
   } catch (error) {
     res.status(500).json({

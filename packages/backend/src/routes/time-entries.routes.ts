@@ -142,6 +142,31 @@ router.delete('/:id', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 /**
+ * PATCH /api/time-entries/:id/status
+ * Update time entry status (approve/reject) - Admin only
+ */
+router.patch('/:id/status', adminMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      throw ApiError.validation({ status: ['Status must be pending, approved, or rejected'] });
+    }
+
+    const { mockDb } = await import('../lib/mock-db.js');
+    await mockDb.initialize();
+    
+    const entry = mockDb.updateTimeEntry(req.params.id, { status });
+    if (!entry) {
+      throw ApiError.notFound('Time entry not found');
+    }
+    
+    res.json(entry);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/time-entries/export
  * Export time entries to Excel (admin only)
  * Validates: Requirements 5.3
