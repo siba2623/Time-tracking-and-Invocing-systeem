@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 // Mock Prisma client for testing
-export const mockPrismaClient = {
+export const mockPrismaClient: any = {
   user: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
@@ -60,7 +60,7 @@ export const mockPrismaClient = {
 };
 
 // Test data generators
-export function createTestUser(overrides = {}) {
+export function createTestUser(overrides: Record<string, any> = {}): Record<string, any> {
   return {
     id: 'test-user-id',
     email: 'test@example.com',
@@ -73,7 +73,7 @@ export function createTestUser(overrides = {}) {
   };
 }
 
-export function createTestTimeEntry(overrides = {}) {
+export function createTestTimeEntry(overrides: Record<string, any> = {}): Record<string, any> {
   return {
     id: 'test-entry-id',
     employeeId: 'test-user-id',
@@ -92,7 +92,7 @@ export function createTestTimeEntry(overrides = {}) {
   };
 }
 
-export function createTestClient(overrides = {}) {
+export function createTestClient(overrides: Record<string, any> = {}): Record<string, any> {
   return {
     id: 'test-client-id',
     name: 'Test Client',
